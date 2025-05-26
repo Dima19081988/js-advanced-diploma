@@ -25,7 +25,7 @@
 export function calcTileType(index, boardSize) {
   const lastIndex = boardSize * boardSize - 1;
   const top = index < boardSize;
-  const bottom = index >= boardSize;
+  const bottom = index >= boardSize * (boardSize - 1);
   const left = index % boardSize === 0;
   const right = (index + 1) % boardSize === 0;
 
