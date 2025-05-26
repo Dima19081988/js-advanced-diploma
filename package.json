@@ -1,0 +1,39 @@
+{
+  "name": "js-advanced-diploma",
+  "version": "1.0.0",
+  "description": "Вы неплохо овладели не только продвинутыми возможностями JS, но и инфраструктурными инструментами. Вам поручили первый проект: разработать небольшую пошаговую игру.",
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack serve --mode development",
+    "build": "webpack --mode production",
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dima19081988/js-advanced-diploma.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Dima19081988/js-advanced-diploma/issues"
+  },
+  "homepage": "https://github.com/Dima19081988/js-advanced-diploma#readme",
+  "devDependencies": {
+    "@babel/core": "^7.27.1",
+    "@babel/plugin-transform-modules-commonjs": "^7.27.1",
+    "@babel/preset-env": "^7.27.2",
+    "babel-loader": "^10.0.0",
+    "css-loader": "^7.1.2",
+    "eslint": "^9.27.0",
+    "file-loader": "^6.2.0",
+    "html-loader": "^5.1.0",
+    "html-webpack-plugin": "^5.6.3",
+    "jest": "^29.7.0",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.1"
+  }
+}
