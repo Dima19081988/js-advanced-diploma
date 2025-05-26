@@ -34,4 +34,4 @@ describe ('calcTileType', () => {
     test ('left', () => {
         expect(calcTileType(8, boardSize)).toBe('left');
     });
-})
+});

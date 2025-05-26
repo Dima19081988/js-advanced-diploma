@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Вы неплохо овладели не только продвинутыми возможностями JS, но и инфраструктурными инструментами. Вам поручили первый проект: разработать небольшую пошаговую игру.",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "webpack serve --mode development",
     "build": "webpack --mode production",
