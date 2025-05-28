@@ -14,6 +14,10 @@ export default class GameController {
   constructor(gamePlay, stateService) {
     this.gamePlay = gamePlay;
     this.stateService = stateService;
+    this.allPositioned = [];
+
+    this.onCellEnter = this.onCellEnter.bind(this);
+    this.onCellLeave = this.onCellLeave.bind(this);
   }
 
   init() {
@@ -33,11 +37,13 @@ export default class GameController {
     .map((character, i) => new PositionedCharacter(character, playerPositions[i]));
     const positionedEnemy = enemyTeam.characters
     .map((character, i) => new  PositionedCharacter(character, enemyPositions[i]));
-    const allPositioned = [...positionedPlayer, ...positionedEnemy];
+    this.allPositioned = [...positionedPlayer, ...positionedEnemy];
 
-    this.gamePlay.redrawPositions(allPositioned);
+    this.gamePlay.redrawPositions(this.allPositioned);
 
-    // TODO: add event listeners to gamePlay events
+    this.gamePlay.addCellEnterListener(this.onCellEnter);
+    this.gamePlay.addCellLeaveListener(this.onCellLeave);
+
     // TODO: load saved stated from stateService
   }
 
@@ -46,11 +52,20 @@ export default class GameController {
   }
 
   onCellEnter(index) {
-    // TODO: react to mouse enter
+    const positionChar = this.allPositioned.find(pc => pc.position === index);
+    if (positionChar) {
+      const { level, attack, defence, health } = positionChar.character;
+      const tooltipText = this.characterInfo`${level} ${attack} ${defence} ${health}`;
+      this.gamePlay.showCellTooltip(tooltipText, index);
+    }
   }
 
   onCellLeave(index) {
-    // TODO: react to mouse leave
+    this.gamePlay.hideCellTooltip(index);
+  }
+
+  characterInfo(strings, level, attack, defence, health) {
+    return `🎖${level} ⚔${attack} 🛡${defence} ❤${health}`;
   }
 }
 
