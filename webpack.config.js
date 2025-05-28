@@ -1,26 +1,20 @@
-const path = require('node:path');
-const HtmlWebPackPlugin = require('html-webpack-plugin');
+import path from 'path';
+import HtmlWebPackPlugin from 'html-webpack-plugin';
 
-module.exports = {
+export default {
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(process.cwd(), 'dist'),
   },
   module: {
     rules: [
       {
         test: /\.js$/,
         exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-        },
+        use: { loader: 'babel-loader' },
       },
       {
         test: /\.html$/,
-        use: [
-          {
-            loader: 'html-loader',
-          },
-        ],
+        use: ['html-loader'],
       },
       {
         test: /\.css$/i,
@@ -33,13 +27,13 @@ module.exports = {
       {
         test: /\.(woff|woff2|eot|ttf|otf)$/i,
         type: 'asset/resource',
-      }
+      },
     ],
   },
   plugins: [
     new HtmlWebPackPlugin({
       template: './src/index.html',
       filename: './index.html',
-    })
+    }),
   ],
 };
