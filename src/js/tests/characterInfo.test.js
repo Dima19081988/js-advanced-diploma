@@ -7,7 +7,7 @@ describe ('characterInfo - tagged template', () => {
         const defence = 10;
         const health = 50;
 
-        const result = characterInfo`${level} ${attack} ${defence} ${health}`
+        const result = characterInfo`${level} ${attack} ${defence} ${health}`;
 
         expect(result).toBe('🎖1 ⚔40 🛡10 ❤50');
     });
@@ -18,8 +18,8 @@ describe ('characterInfo - tagged template', () => {
         const defence = 40;
         const health = 100;
 
-        const result = characterInfo`${level} ${attack} ${defence} ${health}`
+        const result = characterInfo`${level} ${attack} ${defence} ${health}`;
 
         expect(result).toBe('🎖5 ⚔20 🛡40 ❤100');
-    })
-})
+    });
+});

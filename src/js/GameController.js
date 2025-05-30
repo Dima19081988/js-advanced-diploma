@@ -1,14 +1,16 @@
 import themes from "./themes.js";
+import cursors from "./cursors.js";
 import { generateTeam } from "./generators.js";
 import { characterInfo } from "./utils.js";
 import PositionedCharacter from "./PositionedCharacter.js";
-
+import GameState from "./GameState.js";
 import Bowman from "./characters/bowman.js";
 import Swordsman from "./characters/swordsman.js";
 import Magician from "./characters/magician.js";
-import Daemon from "./characters/daemon.js";
+import Daemon from "./characters/daemon.js";щ
 import Undead from "./characters/undead.js";
 import Vampire from "./characters/vampire.js";
+import GamePlay from "./GamePlay.js";
 
 
 export default class GameController {
@@ -16,9 +18,10 @@ export default class GameController {
     this.gamePlay = gamePlay;
     this.stateService = stateService;
     this.allPositioned = [];
-
+    this.gameState = new GameState()
     this.onCellEnter = this.onCellEnter.bind(this);
     this.onCellLeave = this.onCellLeave.bind(this);
+    this.onCellClick = this.onCellClick.bind(this);
   }
 
   init() {
@@ -41,15 +44,30 @@ export default class GameController {
     this.allPositioned = [...positionedPlayer, ...positionedEnemy];
 
     this.gamePlay.redrawPositions(this.allPositioned);
-
     this.gamePlay.addCellEnterListener(this.onCellEnter);
     this.gamePlay.addCellLeaveListener(this.onCellLeave);
-
+    this.gamePlay.addCellClickListener(this.onCellClick);
     // TODO: load saved stated from stateService
   }
 
   onCellClick(index) {
-    // TODO: react to click
+    if (this.gameState.currentPlayer !== 'player') {
+      GamePlay.showError('Сейчас не ваш ход');
+      return;
+    }
+
+    const positionChar = this.allPositioned.find(pc => pc.position === index);
+    if (!positionChar || !['bowman', 'swordsman', 'magician']
+      .includes(positionChar.character.type)) {
+        GamePlay.showError('Выберите своего персонажа');
+        return;
+      }
+    if(this.selectedCellIndex !== undefined) {
+      this.gamePlay.deselectCell(this.selectedCellIndex)
+    }
+    
+    this.selectedCellIndex = index;
+    this.gamePlay.selectCell(index, 'yellow');
   }
 
   onCellEnter(index) {
