@@ -1,5 +1,6 @@
 import themes from "./themes.js";
 import { generateTeam } from "./generators.js";
+import { characterInfo } from "./utils.js";
 import PositionedCharacter from "./PositionedCharacter.js";
 
 import Bowman from "./characters/bowman.js";
@@ -55,7 +56,7 @@ export default class GameController {
     const positionChar = this.allPositioned.find(pc => pc.position === index);
     if (positionChar) {
       const { level, attack, defence, health } = positionChar.character;
-      const tooltipText = this.characterInfo`${level} ${attack} ${defence} ${health}`;
+      const tooltipText = characterInfo`${level} ${attack} ${defence} ${health}`;
       this.gamePlay.showCellTooltip(tooltipText, index);
     }
   }
@@ -64,9 +65,6 @@ export default class GameController {
     this.gamePlay.hideCellTooltip(index);
   }
 
-  characterInfo(strings, level, attack, defence, health) {
-    return `🎖${level} ⚔${attack} 🛡${defence} ❤${health}`;
-  }
 }
 
 function getPlayerPosition(boardSize, teamSize) {
