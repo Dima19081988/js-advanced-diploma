@@ -55,6 +55,7 @@ export default class GameController {
   }
 
   onCellClick(index) {
+// не твой ход
     if (this.gameState.currentPlayer !== 'player') {
       GamePlay.showError('Сейчас не ваш ход');
       return;
@@ -62,19 +63,44 @@ export default class GameController {
 
     const positionChar = this.allPositioned.find(pc => pc.position === index);
 
+//твой хрд
+    if (positionChar && ['bowman', 'swordsman', 'magician']
+      .includes(positionChar.character.type)) {
+        if(this.selectedCellIndex !== undefined) {
+           this.gamePlay.deselectCell(this.selectedCellIndex);
+        }
+        this.selectedCellIndex = index;
+        this.gamePlay.selectCell(index, 'yellow');
+        return;
+    }
+
+// перемещение выбранного персонажа
+    if (this.selectedCellIndex !== undefined && !positionChar) {
+      if(canMoveTo(this.allPositioned, this.selectedCellIndex, index)) {
+        const characterToMove = this.allPositioned.find(pc => pc.position === this.selectedCellIndex);
+        characterToMove.position = index;
+        for (let i = 0; i < 64; i++) {
+          this.gamePlay.deselectCell(i);
+        }
+        this.selectedCellIndex = undefined;
+        this.gamePlay.redrawPositions(this.allPositioned);
+
+        this.gamePlay.currentPlayer = 'enemy';
+        return;
+      } else {
+        GamePlay.showError('Недопустимый ход');
+        return;
+      }
+    }
+
+// выбор персонажа врага
     if (!positionChar || !['bowman', 'swordsman', 'magician']
       .includes(positionChar.character.type)) {
         GamePlay.showError('Выберите своего персонажа');
         return;
-      }
-
-    if(this.selectedCellIndex !== undefined) {
-      this.gamePlay.deselectCell(this.selectedCellIndex);
     }
     
-    this.selectedCellIndex = index;
-    this.gamePlay.selectCell(index, 'yellow');
-
+// недопустимое действие (ход, атака)
     if(this.isInvalidAction(this.selectedCellIndex, index)) {
       alert('Недопустимое действие, выберете другую клетку');
       return;
