@@ -34,6 +34,6 @@ export default class GameState {
       currentScore: this.currentScore,
       maxScore: this.maxScore,
       theme: this.theme
-    }
+    };
   }
 }

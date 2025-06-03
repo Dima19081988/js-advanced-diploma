@@ -104,9 +104,9 @@ export default class GameController {
       currentScore: this.currentScore,
       maxScore: this.maxScore,
       theme: this.themes[0]
-    })
+    });
     this.allPositioned = [];
-    this.init(1)
+    this.init(1);
   }
 
   init(level) {
@@ -341,7 +341,7 @@ export default class GameController {
             this.gameState.currentPlayer = 'player';
 
             this.saveGame();
-          })
+          });
 
           return;
         }
@@ -395,7 +395,7 @@ export default class GameController {
     const players = this.allPositioned.filter(pc => this.playerTypes.includes(pc.character.type));
     const playerCount = Math.max(players.length, 2);
     const enemyTypes = [Daemon, Undead, Vampire];
-    const enemyTeam = generateTeam(enemyTypes, this.currentLevel, playerCount)
+    const enemyTeam = generateTeam(enemyTypes, this.currentLevel, playerCount);
 
     const boardSize = 8;
     const playerPositions = getPlayerPosition (boardSize, players.length);
@@ -406,7 +406,7 @@ export default class GameController {
     const positionedPlayer = players.map((pc, i) => {
       pc.position = playerPositions[i];
       return pc;
-    })
+    });
     const positionedEnemy = enemyTeam.characters
     .map((character, i) => new PositionedCharacter(character, enemyPositions[i]));
     
