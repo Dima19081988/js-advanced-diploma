@@ -4,6 +4,7 @@ import { generateTeam } from "./generators.js";
 import { characterInfo } from "./utils.js";
 import { canMoveTo } from "./utils/canMoveTo.js";
 import { canAttack } from "./utils/canAttack.js";
+import { restoreCharacter } from "./utils/restoreCharacter.js";
 import PositionedCharacter from "./PositionedCharacter.js";
 import GameState from "./GameState.js";
 import Bowman from "./characters/bowman.js";
@@ -32,6 +33,11 @@ export default class GameController {
     this.onCellEnter = this.onCellEnter.bind(this);
     this.onCellLeave = this.onCellLeave.bind(this);
     this.onCellClick = this.onCellClick.bind(this);
+
+    this.gamePlay.addCellEnterListener(this.onCellEnter);
+    this.gamePlay.addCellLeaveListener(this.onCellLeave);
+    this.gamePlay.addCellClickListener(this.onCellClick);
+
     this.gamePlay.addNewGameListener(() => this.startNewGame());
     this.gamePlay.addSaveGameListener(() => this.saveGame());
     this.gamePlay.addLoadGameListener(() => this.loadGame());
@@ -54,7 +60,7 @@ export default class GameController {
   restoreGameSave(state) {
     this.gameState = GameState.from(state);
     this.allPositioned = state.allPositioned
-    .map(pc => new PositionedCharacter(pc.character, pc.position));
+    .map(pc => new PositionedCharacter(restoreCharacter(pc.character), pc.position));
     this.isGameActive = true;
     this.gamePlay.drawUi(this.themes[(this.gameState.currentLevel - 1) % this.themes.length]);
     this.gamePlay.redrawPositions(this.allPositioned);
@@ -140,10 +146,6 @@ export default class GameController {
 
     this.gamePlay.redrawPositions(this.allPositioned);
 
-    this.gamePlay.addCellEnterListener(this.onCellEnter);
-    this.gamePlay.addCellLeaveListener(this.onCellLeave);
-    this.gamePlay.addCellClickListener(this.onCellClick);
-
     this.gameState.currentPlayer = 'player';
   }
 
@@ -184,6 +186,9 @@ export default class GameController {
       this.gamePlay.showDamage(index, damage).then (() => {
         if(target.health <= 0) {
           this.allPositioned = this.allPositioned.filter(pc => pc.position != index);
+          if([Daemon, Undead, Vampire].includes(target.type)) {
+            this.currentScore += 10;
+          }
         }
         this.gamePlay.redrawPositions(this.allPositioned);
         for (let i = 0; i < 64; i++) {
@@ -386,6 +391,9 @@ export default class GameController {
       this.endGame();
       return;
     }
+
+    this.currentScore = this.currentLevel * 50;
+
     this.currentLevel += 1;
     const theme = this.themes[(this.currentLevel - 1) % this.themes.length];
     this.gamePlay.drawUi(theme);

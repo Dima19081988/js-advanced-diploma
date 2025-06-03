@@ -31,3 +31,5 @@ export function calcHealthLevel(health) {
 export function characterInfo(strings, level, attack, defence, health) {
     return `🎖${level} ⚔${attack} 🛡${defence} ❤${health}`;
 }
+
+
