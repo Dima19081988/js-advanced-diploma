@@ -21,8 +21,8 @@ export default class GameController {
     this.stateService = stateService;
     this.allPositioned = [];
     this.gameState = new GameState();
-    this.playerTypes = [Swordsman, Bowman, Magician];
-    this.enemyTypes = [Daemon, Undead, Vampire];
+    this.playerTypes = ['swordsman', 'bowman', 'magician'];
+    this.enemyTypes = ['daemon', 'undead', 'vampire'];
     this.onCellEnter = this.onCellEnter.bind(this);
     this.onCellLeave = this.onCellLeave.bind(this);
     this.onCellClick = this.onCellClick.bind(this);
@@ -63,7 +63,7 @@ export default class GameController {
 
     const positionChar = this.allPositioned.find(pc => pc.position === index);
 
-//твой хрд
+//твой ход
     if (positionChar && ['bowman', 'swordsman', 'magician']
       .includes(positionChar.character.type)) {
         if(this.selectedCellIndex !== undefined) {
@@ -72,6 +72,33 @@ export default class GameController {
         this.selectedCellIndex = index;
         this.gamePlay.selectCell(index, 'yellow');
         return;
+    }
+
+// реализация атаки врага
+    if(this.selectedCellIndex !== undefined
+      && positionChar
+      && ['daemon', 'undead', 'vampire'].includes(positionChar.character.type)
+      && canAttack(this.allPositioned, this.selectedCellIndex, index)
+    ) {
+      const attacker = this.allPositioned.find(pc => pc.position === this.selectedCellIndex).character;
+      const target = positionChar.character;
+      const damage = Math.max(attacker.attack - target.defence, attacker.attack * 0.1);
+      target.health -= damage;
+
+      this.gamePlay.showDamage(index, damage).then (() => {
+        if(target.health <= 0) {
+          this.allPositioned = this.allPositioned.filter(pc => pc.position != index);
+        }
+        this.gamePlay.redrawPositions(this.allPositioned);
+        for (let i = 0; i < 64; i++) {
+          this.gamePlay.deselectCell(i);
+        }
+        this.selectedCellIndex = undefined;
+
+        this.gameState.currentPlayer = 'enemy';
+      });
+      
+      return;
     }
 
 // перемещение выбранного персонажа
@@ -85,7 +112,7 @@ export default class GameController {
         this.selectedCellIndex = undefined;
         this.gamePlay.redrawPositions(this.allPositioned);
 
-        this.gamePlay.currentPlayer = 'enemy';
+        // this.gameState.currentPlayer = 'enemy';
         return;
       } else {
         GamePlay.showError('Недопустимый ход');
@@ -94,11 +121,11 @@ export default class GameController {
     }
 
 // выбор персонажа врага
-    if (!positionChar || !['bowman', 'swordsman', 'magician']
-      .includes(positionChar.character.type)) {
-        GamePlay.showError('Выберите своего персонажа');
-        return;
-    }
+//     if (!positionChar || !['bowman', 'swordsman', 'magician']
+//       .includes(positionChar.character.type)) {
+//         GamePlay.showError('Выберите своего персонажа');
+//         return;
+//     }
     
 // недопустимое действие (ход, атака)
     if(this.isInvalidAction(this.selectedCellIndex, index)) {
@@ -147,19 +174,19 @@ export default class GameController {
       return;
     }
 
-//условие перемещания
-    if(canMoveTo(this.allPositioned, this.selectedCellIndex, index)) {
-      this.gamePlay.setCursor(cursors.pointer);
-      this.gamePlay.selectCell(index, 'green');
+//условие атаки
+    if(positionChar && ['daemon', 'undead', 'vampire'].includes(positionChar.character.type)
+       && canAttack(this.allPositioned, this.selectedCellIndex, index)) {
+      this.gamePlay.setCursor(cursors.crosshair);
+      this.gamePlay.selectCell(index, 'red');
       this.gamePlay.hideCellTooltip(index);
       return;
     }
 
-//условие атаки
-    if(positionChar && this.enemyTypes.includes(positionChar.character.type)
-       && canAttack(this.allPositioned, this.selectedCellIndex, index)) {
-      this.gamePlay.setCursor(cursors.crosshair);
-      this.gamePlay.selectCell(index, 'red');
+//условие перемещания
+    if(canMoveTo(this.allPositioned, this.selectedCellIndex, index)) {
+      this.gamePlay.setCursor(cursors.pointer);
+      this.gamePlay.selectCell(index, 'green');
       this.gamePlay.hideCellTooltip(index);
       return;
     }
