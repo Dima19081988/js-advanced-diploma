@@ -5,6 +5,7 @@ import { characterInfo } from "./utils.js";
 import { canMoveTo } from "./utils/canMoveTo.js";
 import { canAttack } from "./utils/canAttack.js";
 import { restoreCharacter } from "./utils/restoreCharacter.js";
+import { restoreGameState } from "./utils/restoreGameState.js";
 import PositionedCharacter from "./PositionedCharacter.js";
 import GameState from "./GameState.js";
 import Bowman from "./characters/bowman.js";
@@ -70,6 +71,7 @@ export default class GameController {
   }
 //сохранение/загрузка состояния
   saveGame() {
+    console.log('saveGame called', this.allPositioned, this.currentScore, this.maxScore);
     try { 
       const state = new GameState({
         currentLevel: this.gameState.currentLevel,
@@ -86,16 +88,19 @@ export default class GameController {
   }
 
   loadGame() {
+    console.log('loadGame called');
     try {
       const savedState = this.stateService.load();
       if (savedState) {
+        console.log(savedState);
         this.restoreGameSave(savedState);
         alert('Игра загружена');
       } else {
         alert('Сохранений не найдено');
       }
     } catch(error) {
-      GamePlay.showError('Ошибка загрузки: '+ error.message);
+      this.gamePlay.showError('Ошибка загрузки: '+ error.message);
+      this.startNewGame();
     }
   }
 
@@ -202,8 +207,13 @@ export default class GameController {
           return;
         }
         this.gameState.currentPlayer = 'enemy';
-        this.saveGame();
         setTimeout(() => this.computerTurn(), 500);
+        const playersLeft = this.allPositioned.some(pc => this.playerTypes
+          .includes(pc.character.type));
+        if (!playersLeft) {
+          this.endGame();
+          return;
+        }
       });
 
       return;
@@ -221,7 +231,6 @@ export default class GameController {
         this.gamePlay.redrawPositions(this.allPositioned);
 
         this.gameState.currentPlayer = 'enemy';
-        this.saveGame();
         setTimeout(() => this.computerTurn(), 500);
         return;
       } else {
@@ -230,20 +239,12 @@ export default class GameController {
       }
     }
 
-// выбор персонажа врага
-//     if (!positionChar || !['bowman', 'swordsman', 'magician']
-//       .includes(positionChar.character.type)) {
-//         GamePlay.showError('Выберите своего персонажа');
-//         return;
-//     }
-    
 // недопустимое действие (ход, атака)
     if(this.isInvalidAction(this.selectedCellIndex, index)) {
       alert('Недопустимое действие, выберете другую клетку');
       return;
     }
   }
-
 
   onCellEnter(index) {
     const positionChar = this.allPositioned.find(pc => pc.position === index);
@@ -340,12 +341,10 @@ export default class GameController {
             const playersLeft = this.allPositioned.some(pc => this.playerTypes
               .includes(pc.character.type));
             if(!playersLeft) {
-              this.startNewLevel();
+              this.endGame();
               return;
             }
             this.gameState.currentPlayer = 'player';
-
-            this.saveGame();
           });
 
           return;
@@ -360,7 +359,6 @@ export default class GameController {
             enemy.position = i;
             this.gamePlay.redrawPositions(this.allPositioned);
             this.gameState.currentPlayer = 'player';
-            this.saveGame();
             return;
         }
       }
@@ -435,7 +433,6 @@ export default class GameController {
     if (this.currentScore > this.maxScore) {
       this.maxScore = this.currentScore;
     }
-    this.saveGame();
     alert(`Игра окончена: ваш счет: ${this.currentScore}, лучший счет: ${this.maxScore}`);
   };
 }
