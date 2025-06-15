@@ -5,7 +5,6 @@ import { characterInfo } from "./utils.js";
 import { canMoveTo } from "./utils/canMoveTo.js";
 import { canAttack } from "./utils/canAttack.js";
 import { restoreCharacter } from "./utils/restoreCharacter.js";
-import { restoreGameState } from "./utils/restoreGameState.js";
 import PositionedCharacter from "./PositionedCharacter.js";
 import GameState from "./GameState.js";
 import Bowman from "./characters/bowman.js";
@@ -16,7 +15,6 @@ import Undead from "./characters/undead.js";
 import Vampire from "./characters/vampire.js";
 import GamePlay from "./GamePlay.js";
 
-
 export default class GameController {
   constructor(gamePlay, stateService) {
     this.gamePlay = gamePlay;
@@ -26,10 +24,17 @@ export default class GameController {
     this.maxScore = 0;
     this.allPositioned = [];
     this.gameState = new GameState();
-    this.themes = [themes.prairie, themes.arctic, themes.desert, themes.mountain];
+    this.themes = [
+      themes.prairie,
+      themes.arctic,
+      themes.desert,
+      themes.mountain,
+    ];
     this.currentLevel = 1;
-    this.playerTypes = ['swordsman', 'bowman', 'magician'];
-    this.enemyTypes = ['daemon', 'undead', 'vampire'];
+    this.playerTypes = ["swordsman", "bowman", "magician"];
+    this.enemyTypes = ["daemon", "undead", "vampire"];
+    this.userTeam = new Set();
+    this.enemyTeam = new Set();
 
     this.onCellEnter = this.onCellEnter.bind(this);
     this.onCellLeave = this.onCellLeave.bind(this);
@@ -43,7 +48,7 @@ export default class GameController {
     this.gamePlay.addSaveGameListener(() => this.saveGame());
     this.gamePlay.addLoadGameListener(() => this.loadGame());
   }
-//загрузка сохраненного состояния
+  //загрузка сохраненного состояния
   async initializeGame() {
     try {
       const savedState = this.stateService.load();
@@ -52,69 +57,90 @@ export default class GameController {
       } else {
         this.startNewGame();
       }
-    } catch(error) { 
-      GamePlay.showError('Ошибка загрузки');
+    } catch (error) {
+      GamePlay.showError("Ошибка загрузки");
       this.startNewGame();
     }
   }
-//восстновление состояния
+  //восстновление состояния
   restoreGameSave(state) {
     this.gameState = GameState.from(state);
-    this.allPositioned = state.allPositioned
-    .map(pc => new PositionedCharacter(restoreCharacter(pc.character), pc.position));
+    this.allPositioned = state.allPositioned.map(
+      (pc) =>
+        new PositionedCharacter(restoreCharacter(pc.character), pc.position),
+    );
     this.isGameActive = true;
-    this.gamePlay.drawUi(this.themes[(this.gameState.currentLevel - 1) % this.themes.length]);
+    this.gamePlay.drawUi(
+      this.themes[(this.gameState.currentLevel - 1) % this.themes.length],
+    );
     this.gamePlay.redrawPositions(this.allPositioned);
 
     this.currentScore = this.gameState.currentScore;
     this.maxScore = this.gameState.maxScore;
+
+    this.userTeam = new Set(
+      this.allPositioned
+        .filter((pc) => this.playerTypes.includes(pc.character.type))
+        .map((pc) => pc.character),
+    );
+    this.enemyTeam = new Set(
+      this.allPositioned
+        .filter((pc) => this.enemyTypes.includes(pc.character.type))
+        .map((pc) => pc.character),
+    );
   }
-//сохранение/загрузка состояния
+  //сохранение/загрузка состояния
   saveGame() {
-    console.log('saveGame called', this.allPositioned, this.currentScore, this.maxScore);
-    try { 
+    console.log(
+      "saveGame called",
+      this.allPositioned,
+      this.currentScore,
+      this.maxScore,
+    );
+    try {
       const state = new GameState({
         currentLevel: this.gameState.currentLevel,
         currentPlayer: this.gameState.currentPlayer,
         allPositioned: this.allPositioned,
         currentScore: this.currentScore,
         maxScore: this.maxScore,
-        theme: this.themes[(this.gameState.currentLevel - 1) % this.themes.length],
+        theme:
+          this.themes[(this.gameState.currentLevel - 1) % this.themes.length],
       });
       this.stateService.save(state);
-    } catch(error) {
-      GamePlay.showError('Ошибка сохранения: ' + error.message);
-    };
+    } catch (error) {
+      GamePlay.showError("Ошибка сохранения: " + error.message);
+    }
   }
 
   loadGame() {
-    console.log('loadGame called');
+    console.log("loadGame called");
     try {
       const savedState = this.stateService.load();
       if (savedState) {
         console.log(savedState);
         this.restoreGameSave(savedState);
-        alert('Игра загружена');
+        alert("Игра загружена");
       } else {
-        alert('Сохранений не найдено');
+        alert("Сохранений не найдено");
       }
-    } catch(error) {
-      this.gamePlay.showError('Ошибка загрузки: '+ error.message);
+    } catch (error) {
+      this.gamePlay.showError("Ошибка загрузки: " + error.message);
       this.startNewGame();
     }
   }
 
-//запуск новой игры
+  //запуск новой игры
   startNewGame() {
     this.isGameActive = true;
     this.currentScore = 0;
     this.maxScore = this.maxScore || 0;
     this.gameState = new GameState({
       currentLevel: 1,
-      currentPlayer: 'player',
+      currentPlayer: "player",
       currentScore: this.currentScore,
       maxScore: this.maxScore,
-      theme: this.themes[0]
+      theme: this.themes[0],
     });
     this.allPositioned = [];
     this.init(1);
@@ -122,7 +148,7 @@ export default class GameController {
 
   init(level) {
     this.gameState.currentLevel = level;
-    this.gamePlay.drawUi('prairie');
+    this.gamePlay.drawUi("prairie");
 
     const playerTypes = [Bowman, Swordsman, Magician];
     const enemyTypes = [Daemon, Undead, Vampire];
@@ -130,68 +156,86 @@ export default class GameController {
     const playerTeam = generateTeam(playerTypes, 1, 2);
     const enemyTeam = generateTeam(enemyTypes, 1, 2);
 
+    this.userTeam = new Set(playerTeam.characters);
+    this.enemyTeam = new Set(enemyTeam.characters);
+
     for (const character of playerTeam.characters) {
-    console.log(character.type, character.level);
+      console.log(character.type, character.level);
     }
 
     for (const character of enemyTeam.characters) {
-    console.log(character.type, character.level);
+      console.log(character.type, character.level);
     }
 
     const boardSize = 8;
-    const playerPositions = getPlayerPosition (boardSize, playerTeam.characters.length);
-    const enemyPositions = getEnemyPosition (boardSize, enemyTeam.characters.length);
+    const playerPositions = getPlayerPosition(
+      boardSize,
+      playerTeam.characters.length,
+    );
+    const enemyPositions = getEnemyPosition(
+      boardSize,
+      enemyTeam.characters.length,
+    );
 
-    const positionedPlayer = playerTeam.characters
-    .map((character, i) => new PositionedCharacter(character, playerPositions[i]));
-    const positionedEnemy = enemyTeam.characters
-    .map((character, i) => new  PositionedCharacter(character, enemyPositions[i]));
-    
+    const positionedPlayer = playerTeam.characters.map(
+      (character, i) => new PositionedCharacter(character, playerPositions[i]),
+    );
+    const positionedEnemy = enemyTeam.characters.map(
+      (character, i) => new PositionedCharacter(character, enemyPositions[i]),
+    );
+
     this.allPositioned = [...positionedPlayer, ...positionedEnemy];
 
     this.gamePlay.redrawPositions(this.allPositioned);
 
-    this.gameState.currentPlayer = 'player';
+    this.gameState.currentPlayer = "player";
   }
 
   onCellClick(index) {
     if (!this.isGameActive) {
       return;
     }
-// не твой ход
-    if (this.gameState.currentPlayer !== 'player') {
-      GamePlay.showError('Сейчас не ваш ход');
+    // не твой ход
+    if (this.gameState.currentPlayer !== "player") {
+      GamePlay.showError("Сейчас не ваш ход");
       return;
     }
 
-    const positionChar = this.allPositioned.find(pc => pc.position === index);
+    const positionChar = this.allPositioned.find((pc) => pc.position === index);
 
-//твой ход
-    if (positionChar && ['bowman', 'swordsman', 'magician']
-      .includes(positionChar.character.type)) {
-        if(this.selectedCellIndex !== undefined) {
-           this.gamePlay.deselectCell(this.selectedCellIndex);
-        }
-        this.selectedCellIndex = index;
-        this.gamePlay.selectCell(index, 'yellow');
-        return;
+    //твой ход
+    if (positionChar && this.userTeam.has(positionChar.character)) {
+      if (this.selectedCellIndex !== undefined) {
+        this.gamePlay.deselectCell(this.selectedCellIndex);
+      }
+      this.selectedCellIndex = index;
+      this.gamePlay.selectCell(index, "yellow");
+      return;
     }
 
-// реализация атаки врага
-    if(this.selectedCellIndex !== undefined
-      && positionChar
-      && ['daemon', 'undead', 'vampire'].includes(positionChar.character.type)
-      && canAttack(this.allPositioned, this.selectedCellIndex, index)
+    // реализация атаки врага
+    if (
+      this.selectedCellIndex !== undefined &&
+      positionChar &&
+      this.enemyTeam.has(positionChar.character) &&
+      canAttack(this.allPositioned, this.selectedCellIndex, index)
     ) {
-      const attacker = this.allPositioned.find(pc => pc.position === this.selectedCellIndex).character;
+      const attacker = this.allPositioned.find(
+        (pc) => pc.position === this.selectedCellIndex,
+      ).character;
       const target = positionChar.character;
-      const damage = Math.max(attacker.attack - target.defence, attacker.attack * 0.1);
+      const damage = Math.max(
+        attacker.attack - target.defence,
+        attacker.attack * 0.1,
+      );
       target.health -= damage;
 
-      this.gamePlay.showDamage(index, damage).then (() => {
-        if(target.health <= 0) {
-          this.allPositioned = this.allPositioned.filter(pc => pc.position != index);
-          if([Daemon, Undead, Vampire].includes(target.type)) {
+      this.gamePlay.showDamage(index, damage).then(() => {
+        if (target.health <= 0) {
+          this.allPositioned = this.allPositioned.filter(
+            (pc) => pc.position != index,
+          );
+          if ([Daemon, Undead, Vampire].includes(target.type)) {
             this.currentScore += 10;
           }
         }
@@ -200,16 +244,18 @@ export default class GameController {
           this.gamePlay.deselectCell(i);
         }
         this.selectedCellIndex = undefined;
-        const enemiesLeft = this.allPositioned.some(pc => this.enemyTypes
-          .includes(pc.character.type));
+        const enemiesLeft = this.allPositioned.some((pc) =>
+          this.enemyTypes.includes(pc.character.type),
+        );
         if (!enemiesLeft) {
           this.startNewLevel();
           return;
         }
-        this.gameState.currentPlayer = 'enemy';
+        this.gameState.currentPlayer = "enemy";
         setTimeout(() => this.computerTurn(), 500);
-        const playersLeft = this.allPositioned.some(pc => this.playerTypes
-          .includes(pc.character.type));
+        const playersLeft = this.allPositioned.some((pc) =>
+          this.playerTypes.includes(pc.character.type),
+        );
         if (!playersLeft) {
           this.endGame();
           return;
@@ -219,10 +265,12 @@ export default class GameController {
       return;
     }
 
-// перемещение выбранного персонажа
+    // перемещение выбранного персонажа
     if (this.selectedCellIndex !== undefined && !positionChar) {
-      if(canMoveTo(this.allPositioned, this.selectedCellIndex, index)) {
-        const characterToMove = this.allPositioned.find(pc => pc.position === this.selectedCellIndex);
+      if (canMoveTo(this.allPositioned, this.selectedCellIndex, index)) {
+        const characterToMove = this.allPositioned.find(
+          (pc) => pc.position === this.selectedCellIndex,
+        );
         characterToMove.position = index;
         for (let i = 0; i < 64; i++) {
           this.gamePlay.deselectCell(i);
@@ -230,29 +278,28 @@ export default class GameController {
         this.selectedCellIndex = undefined;
         this.gamePlay.redrawPositions(this.allPositioned);
 
-        this.gameState.currentPlayer = 'enemy';
+        this.gameState.currentPlayer = "enemy";
         setTimeout(() => this.computerTurn(), 500);
         return;
       } else {
-        GamePlay.showError('Недопустимый ход');
+        GamePlay.showError("Недопустимый ход");
         return;
       }
     }
 
-// недопустимое действие (ход, атака)
-    if(this.isInvalidAction(this.selectedCellIndex, index)) {
-      alert('Недопустимое действие, выберете другую клетку');
+    // недопустимое действие (ход, атака)
+    if (this.isInvalidAction(this.selectedCellIndex, index)) {
+      alert("Недопустимое действие, выберете другую клетку");
       return;
     }
   }
 
   onCellEnter(index) {
-    const positionChar = this.allPositioned.find(pc => pc.position === index);
+    const positionChar = this.allPositioned.find((pc) => pc.position === index);
 
-//если персонаж не выбран
-    if(!this.selectedCellIndex) {
-      if (positionChar && ['bowman', 'swordsman', 'magician']
-        .includes(positionChar.character.type)) {
+    //если персонаж не выбран
+    if (!this.selectedCellIndex) {
+      if (positionChar && this.userTeam.has(positionChar.character)) {
         const { level, attack, defence, health } = positionChar.character;
         const tooltipText = characterInfo`${level} ${attack} ${defence} ${health}`;
         this.gamePlay.showCellTooltip(tooltipText, index);
@@ -261,11 +308,11 @@ export default class GameController {
         this.gamePlay.hideCellTooltip(index);
         this.gamePlay.setCursor(cursors.auto);
       }
-    return;
+      return;
     }
-// если персонаж выбран, его подсветка не меняется
-    if(index === this.selectedCellIndex) {
-      if(positionChar) {
+    // если персонаж выбран, его подсветка не меняется
+    if (index === this.selectedCellIndex) {
+      if (positionChar) {
         const { level, attack, defence, health } = positionChar.character;
         const tooltipText = characterInfo`${level} ${attack} ${defence} ${health}`;
         this.gamePlay.showCellTooltip(tooltipText, index);
@@ -274,10 +321,12 @@ export default class GameController {
       return;
     }
 
-// если персонаж, выбран, но наводим курсор на другого персонажа
-    if (positionChar && ['bowman', 'swordsman', 'magician']
-      .includes(positionChar.character.type) 
-      && positionChar.position !== this.selectedCellIndex) {
+    // если персонаж, выбран, но наводим курсор на другого персонажа
+    if (
+      positionChar &&
+      this.userTeam.has(positionChar.character) &&
+      positionChar.position !== this.selectedCellIndex
+    ) {
       const { level, attack, defence, health } = positionChar.character;
       const tooltipText = characterInfo`${level} ${attack} ${defence} ${health}`;
       this.gamePlay.showCellTooltip(tooltipText, index);
@@ -285,19 +334,22 @@ export default class GameController {
       return;
     }
 
-//условие атаки
-    if(positionChar && ['daemon', 'undead', 'vampire'].includes(positionChar.character.type)
-       && canAttack(this.allPositioned, this.selectedCellIndex, index)) {
+    //условие атаки
+    if (
+      positionChar &&
+      this.enemyTeam.has(positionChar.character) &&
+      canAttack(this.allPositioned, this.selectedCellIndex, index)
+    ) {
       this.gamePlay.setCursor(cursors.crosshair);
-      this.gamePlay.selectCell(index, 'red');
+      this.gamePlay.selectCell(index, "red");
       this.gamePlay.hideCellTooltip(index);
       return;
     }
 
-//условие перемещания
-    if(canMoveTo(this.allPositioned, this.selectedCellIndex, index)) {
+    //условие перемещания
+    if (canMoveTo(this.allPositioned, this.selectedCellIndex, index)) {
       this.gamePlay.setCursor(cursors.pointer);
-      this.gamePlay.selectCell(index, 'green');
+      this.gamePlay.selectCell(index, "green");
       this.gamePlay.hideCellTooltip(index);
       return;
     }
@@ -308,8 +360,8 @@ export default class GameController {
 
   onCellLeave(index) {
     if (this.selectedCellIndex !== index) {
-    this.gamePlay.deselectCell(index);
-      }
+      this.gamePlay.deselectCell(index);
+    }
     this.gamePlay.setCursor(cursors.auto);
     this.gamePlay.hideCellTooltip(index);
   }
@@ -321,69 +373,79 @@ export default class GameController {
   }
 
   computerTurn() {
-    const enemies = this.allPositioned.filter(pc => ['daemon', 'undead', 'vampire']
-      .includes(pc.character.type));
-    const players = this.allPositioned.filter(pc => ['swordsman', 'bowman', 'magician']
-      .includes(pc.character.type));
-//атака противника
+    const enemies = this.allPositioned.filter((pc) =>
+      this.enemyTeam.has(pc.character),
+    );
+    const players = this.allPositioned.filter((pc) =>
+      this.userTeam.has(pc.character),
+    );
+    //атака противника
     for (const enemy of enemies) {
       for (const player of players) {
         if (canAttack(this.allPositioned, enemy.position, player.position)) {
           const attacker = enemy.character;
           const target = player.character;
-          const damage = Math.max(attacker.attack - target.defence, attacker.attack * 0.1);
+          const damage = Math.max(
+            attacker.attack - target.defence,
+            attacker.attack * 0.1,
+          );
           target.health -= damage;
           this.gamePlay.showDamage(player.position, damage).then(() => {
             if (target.health <= 0) {
-              this.allPositioned = this.allPositioned.filter(pc => pc.position !== player.position);
+              this.allPositioned = this.allPositioned.filter(
+                (pc) => pc.position !== player.position,
+              );
             }
             this.gamePlay.redrawPositions(this.allPositioned);
-            const playersLeft = this.allPositioned.some(pc => this.playerTypes
-              .includes(pc.character.type));
-            if(!playersLeft) {
+            const playersLeft = this.allPositioned.some((pc) =>
+              this.playerTypes.includes(pc.character.type),
+            );
+            if (!playersLeft) {
               this.endGame();
               return;
             }
-            this.gameState.currentPlayer = 'player';
+            this.gameState.currentPlayer = "player";
           });
 
           return;
         }
       }
     }
-//перемещение противника, если атака невозможна
+    //перемещение противника, если атака невозможна
     for (const enemy of enemies) {
       for (let i = 0; i < 64; i++) {
-        if (!this.allPositioned.some(pc => pc.position === i) 
-          && canMoveTo(this.allPositioned, enemy.position, i)) {
-            enemy.position = i;
-            this.gamePlay.redrawPositions(this.allPositioned);
-            this.gameState.currentPlayer = 'player';
-            return;
+        if (
+          !this.allPositioned.some((pc) => pc.position === i) &&
+          canMoveTo(this.allPositioned, enemy.position, i)
+        ) {
+          enemy.position = i;
+          this.gamePlay.redrawPositions(this.allPositioned);
+          this.gameState.currentPlayer = "player";
+          return;
         }
       }
     }
-    this.gameState.currentPlayer = 'player';
+    this.gameState.currentPlayer = "player";
   }
 
-//повышение уровня команды
+  //повышение уровня команды
   levelUpTeam() {
     for (const pc of this.allPositioned) {
       if (this.playerTypes.includes(pc.character.type)) {
         pc.character.level += 1;
         pc.character.attack = Math.max(
           pc.character.attack,
-          Math.floor(pc.character.attack * (80 + pc.character.health) / 100)
+          Math.floor((pc.character.attack * (80 + pc.character.health)) / 100),
         );
         pc.character.defence = Math.max(
           pc.character.defence,
-          Math.floor(pc.character.defence * (80 + pc.character.health) / 100)
+          Math.floor((pc.character.defence * (80 + pc.character.health)) / 100),
         );
         pc.character.health = Math.min(100, pc.character.level + 80);
       }
     }
   }
-//старт нового уровня
+  //старт нового уровня
   startNewLevel() {
     if (this.currentLevel >= 4) {
       this.endGame();
@@ -398,14 +460,19 @@ export default class GameController {
 
     this.levelUpTeam();
 
-    const players = this.allPositioned.filter(pc => this.playerTypes.includes(pc.character.type));
+    const players = this.allPositioned.filter((pc) =>
+      this.playerTypes.includes(pc.character.type),
+    );
     const playerCount = Math.max(players.length, 2);
     const enemyTypes = [Daemon, Undead, Vampire];
     const enemyTeam = generateTeam(enemyTypes, this.currentLevel, playerCount);
 
     const boardSize = 8;
-    const playerPositions = getPlayerPosition (boardSize, players.length);
-    const enemyPositions = getEnemyPosition (boardSize, enemyTeam.characters.length);
+    const playerPositions = getPlayerPosition(boardSize, players.length);
+    const enemyPositions = getEnemyPosition(
+      boardSize,
+      enemyTeam.characters.length,
+    );
     players.forEach((pc, i) => {
       pc.position = playerPositions[i];
     });
@@ -413,44 +480,50 @@ export default class GameController {
       pc.position = playerPositions[i];
       return pc;
     });
-    const positionedEnemy = enemyTeam.characters
-    .map((character, i) => new PositionedCharacter(character, enemyPositions[i]));
-    
+    const positionedEnemy = enemyTeam.characters.map(
+      (character, i) => new PositionedCharacter(character, enemyPositions[i]),
+    );
+
     this.allPositioned = [...positionedPlayer, ...positionedEnemy];
+
+    this.userTeam = new Set(positionedPlayer.map((pc) => pc.character));
+    this.enemyTeam = new Set(positionedEnemy.map((pc) => pc.character));
 
     this.gamePlay.redrawPositions(this.allPositioned);
     this.selectedCellIndex = undefined;
-    this.gameState.currentPlayer = 'player';
+    this.gameState.currentPlayer = "player";
   }
-//Блокировка поля
+  //Блокировка поля
   blockGame() {
     this.isGameActive = false;
-    this.gamePlay.setCursor('default');
+    this.gamePlay.setCursor("default");
   }
-//конец игры
+  //конец игры
   endGame() {
     this.blockGame();
     if (this.currentScore > this.maxScore) {
       this.maxScore = this.currentScore;
     }
-    alert(`Игра окончена: ваш счет: ${this.currentScore}, лучший счет: ${this.maxScore}`);
-  };
+    alert(
+      `Игра окончена: ваш счет: ${this.currentScore}, лучший счет: ${this.maxScore}`,
+    );
+  }
 }
 //получение позиции игрока
 function getPlayerPosition(boardSize, teamSize) {
   const positions = [];
-    for (let i = 0; i < boardSize; i++) {
-      positions.push(i * boardSize);
-      positions.push(i * boardSize + 1);
-    }
-    return positions.sort(() => Math.random() - 0.5).slice(0, teamSize);
+  for (let i = 0; i < boardSize; i++) {
+    positions.push(i * boardSize);
+    positions.push(i * boardSize + 1);
+  }
+  return positions.sort(() => Math.random() - 0.5).slice(0, teamSize);
 }
 //получение позиции врага
 function getEnemyPosition(boardSize, teamSize) {
   const positions = [];
-    for (let i = 0; i < boardSize; i++) {
-      positions.push(i * boardSize + boardSize - 2);
-      positions.push(i * boardSize + boardSize - 1);
-    }
-    return positions.sort(() => Math.random() - 0.5).slice(0, teamSize);
+  for (let i = 0; i < boardSize; i++) {
+    positions.push(i * boardSize + boardSize - 2);
+    positions.push(i * boardSize + boardSize - 1);
+  }
+  return positions.sort(() => Math.random() - 0.5).slice(0, teamSize);
 }

@@ -1,17 +1,17 @@
 export default [
   {
-    files: ['**/*.js'],
+    files: ["**/*.js"],
     languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
+      ecmaVersion: "latest",
+      sourceType: "module",
       globals: {
-        window: 'readonly',
-        document: 'readonly',
+        window: "readonly",
+        document: "readonly",
       },
     },
     rules: {
-      'semi': ['error', 'always'],
-      'no-unused-vars': 'warn',
+      semi: ["error", "always"],
+      "no-unused-vars": "warn",
     },
   },
 ];

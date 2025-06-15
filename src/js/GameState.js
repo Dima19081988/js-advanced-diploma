@@ -1,11 +1,11 @@
 export default class GameState {
   constructor({
     currentLevel = 1,
-    currentPlayer = 'player',
+    currentPlayer = "player",
     allPositioned = [],
     currentScore = 0,
     maxScore = 0,
-    theme = 'prairie',
+    theme = "prairie",
   } = {}) {
     this.currentLevel = currentLevel;
     this.currentPlayer = currentPlayer;
@@ -22,7 +22,7 @@ export default class GameState {
       allPositioned: object.allPositioned,
       currentScore: object.currentScore,
       maxScore: object.maxScore,
-      theme: object.theme
+      theme: object.theme,
     });
   }
 
@@ -33,7 +33,7 @@ export default class GameState {
       allPositioned: this.allPositioned,
       currentScore: this.currentScore,
       maxScore: this.maxScore,
-      theme: this.theme
+      theme: this.theme,
     };
   }
 }

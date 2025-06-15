@@ -1,10 +1,10 @@
 export function* characterGenerator(allowedTypes, maxLevel) {
-  while(true) {
-    const TypeClass = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
+  while (true) {
+    const TypeClass =
+      allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
     const level = Math.floor(Math.random() * maxLevel) + 1;
     yield new TypeClass(level, maxLevel);
   }
-
 }
 
 import Team from "./Team.js";
